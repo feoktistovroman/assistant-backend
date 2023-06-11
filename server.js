@@ -4,11 +4,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
 
 const app = express();
 app.use(express.json());
-app.use(cookieParser());
 
 require('dotenv').config();
 
@@ -73,34 +71,23 @@ app.post('/login', async (req, res) => {
         // Generate JWT
         const token = jwt.sign({ email }, process.env.JWT_SECRET_KEY);
 
-        // Send the token as a cookie
-        res.cookie('token', token, { httpOnly: true }).json({ message: 'Login successful' });
+        res.json({ token });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// Logout endpoint
-app.post('/logout', (req, res) => {
-    // Clear the token cookie
-    res.clearCookie('token').json({ message: 'Logout successful' });
-});
-
 // Protected route example
 app.get('/dashboard', (req, res) => {
-    // Retrieve the token from the cookie
-    const token = req.cookies.token;
+    const token = req.headers.authorization;
 
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
     try {
-        // Verify and decode the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-
-        // Use the decoded data as needed
         const userEmail = decoded.email;
         res.json({ message: `Welcome, ${userEmail}! This is a protected route.` });
     } catch (error) {
