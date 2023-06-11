@@ -19,6 +19,7 @@ mongoose.connect(process.env.MONGODB_URL, {
 
 // User model
 const userSchema = new mongoose.Schema({
+    name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
 });
@@ -28,7 +29,7 @@ const User = mongoose.model('User', userSchema);
 // Register endpoint
 app.post('/register', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { name, email, password } = req.body;
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
@@ -41,7 +42,7 @@ app.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         // Create a new user
-        const newUser = new User({ email, password: hashedPassword });
+        const newUser = new User({ name, email, password: hashedPassword });
         await newUser.save();
 
         res.status(201).json({ message: 'User registered successfully' });
@@ -89,7 +90,7 @@ app.get('/dashboard', (req, res) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
         const userEmail = decoded.email;
-        res.json({ message: `Welcome, ${userEmail}! This is a protected route.` });
+        res.json({ message: `Welcome, ${userEmail}!` });
     } catch (error) {
         console.error(error);
         res.status(401).json({ message: 'Unauthorized' });
