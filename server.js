@@ -35,7 +35,7 @@ const portfolioSchema = new mongoose.Schema({
     goals: { type: String, required: true },
     industries: { type: String, required: true },
     risks: { type: String, required: true },
-    preferences: { type: String, required: true },
+    preferences: { type: String, required: false },
 });
 
 const User = mongoose.model('User', userSchema);
