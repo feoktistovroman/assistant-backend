@@ -43,7 +43,7 @@ const Portfolio = mongoose.model('Portfolio', portfolioSchema);
 
 // Middleware for authentication and authorization
 const authenticateUser = (req, res, next) => {
-    const token = req.headers.authorization;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
 
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized' });
@@ -129,25 +129,13 @@ app.get('/dashboard', authenticateUser, async (req, res) => {
     }
 });
 
-// Create endpoint to save portfolio
 app.post('/portfolio', authenticateUser, async (req, res) => {
     try {
-        const { userId, title, goals, industries, risks, preferences } = req.body;
-
-        // Check if user exists
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Verify that the portfolio belongs to the authenticated user
-        if (user._id.toString() !== req.user.userId) {
-            return res.status(403).json({ message: 'Forbidden' });
-        }
+        const { title, goals, industries, risks, preferences } = req.body;
 
         // Create new portfolio
         const portfolio = new Portfolio({
-            user: userId,
+            user: req.userId,
             title,
             goals,
             industries,
@@ -162,6 +150,39 @@ app.post('/portfolio', authenticateUser, async (req, res) => {
     } catch (error) {
         console.error('Error saving portfolio', error);
         res.status(500).json({ message: 'Failed to save portfolio' });
+    }
+});
+
+// Get portfolio endpoint
+app.get('/portfolio/:portfolioId', authenticateUser, async (req, res) => {
+    try {
+        const { portfolioId } = req.params;
+
+        // Find portfolio by ID and user
+        const portfolio = await Portfolio.findOne({
+            _id: portfolioId,
+            user: req.userId,
+        });
+
+        if (!portfolio) {
+            return res.status(404).json({ message: 'Portfolio not found' });
+        }
+
+        res.json({ portfolio });
+    } catch (error) {
+        console.error('Error fetching portfolio', error);
+        res.status(500).json({ message: 'Failed to fetch portfolio' });
+    }
+});
+
+// Fetch all portfolios for a user
+app.get('/portfolios', authenticateUser, async (req, res) => { // New endpoint to fetch portfolios
+    try {
+        const portfolios = await Portfolio.find({ user: req.userId });
+        res.json({ portfolios });
+    } catch (error) {
+        console.error('Error fetching portfolios', error);
+        res.status(500).json({ message: 'Failed to fetch portfolios' });
     }
 });
 
