@@ -17,14 +17,47 @@ mongoose.connect(process.env.MONGODB_URL, {
     .then(() => console.log('Connected to MongoDB'))
     .catch((error) => console.error('Failed to connect to MongoDB:', error));
 
-// User model
+// User schema
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
 });
 
+// Portfolio schema
+const portfolioSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    title: { type: String, required: true },
+    goals: { type: String, required: true },
+    industries: { type: String, required: true },
+    risks: { type: String, required: true },
+    preferences: { type: String, required: true },
+});
+
 const User = mongoose.model('User', userSchema);
+const Portfolio = mongoose.model('Portfolio', portfolioSchema);
+
+// Middleware for authentication and authorization
+const authenticateUser = (req, res, next) => {
+    const token = req.headers.authorization;
+
+    if (!token) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        req.userId = decodedToken.userId;
+        next();
+    } catch (error) {
+        console.error('Error verifying token', error);
+        res.status(401).json({ message: 'Unauthorized' });
+    }
+};
 
 // Register endpoint
 app.post('/register', async (req, res) => {
@@ -69,8 +102,10 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
+        const userId = user._id;
+
         // Generate JWT
-        const token = jwt.sign({ email }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign({ userId }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
 
         res.json({ token });
     } catch (error) {
@@ -79,21 +114,54 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// Protected route example
-app.get('/dashboard', (req, res) => {
-    const token = req.headers.authorization;
 
-    if (!token) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-
+app.get('/dashboard', authenticateUser, async (req, res) => {
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        const userEmail = decoded.email;
-        res.json({ message: `Welcome, ${userEmail}!` });
+        const user = await User.findById(req.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: `Welcome, ${user.email}!` });
     } catch (error) {
         console.error(error);
         res.status(401).json({ message: 'Unauthorized' });
+    }
+});
+
+// Create endpoint to save portfolio
+app.post('/portfolio', authenticateUser, async (req, res) => {
+    try {
+        const { userId, title, goals, industries, risks, preferences } = req.body;
+
+        // Check if user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Verify that the portfolio belongs to the authenticated user
+        if (user._id.toString() !== req.user.userId) {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+
+        // Create new portfolio
+        const portfolio = new Portfolio({
+            user: userId,
+            title,
+            goals,
+            industries,
+            risks,
+            preferences,
+        });
+
+        // Save portfolio
+        await portfolio.save();
+
+        res.status(201).json({ message: 'Portfolio saved successfully' });
+    } catch (error) {
+        console.error('Error saving portfolio', error);
+        res.status(500).json({ message: 'Failed to save portfolio' });
     }
 });
 
