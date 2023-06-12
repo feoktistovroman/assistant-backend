@@ -186,6 +186,28 @@ app.get('/portfolios', authenticateUser, async (req, res) => { // New endpoint t
     }
 });
 
+// Delete portfolio endpoint
+app.delete('/portfolio/:portfolioId', authenticateUser, async (req, res) => {
+    try {
+        const { portfolioId } = req.params;
+
+        // Find portfolio by ID and user
+        const portfolio = await Portfolio.findOneAndDelete({
+            _id: portfolioId,
+            user: req.userId,
+        });
+
+        if (!portfolio) {
+            return res.status(404).json({ message: 'Portfolio not found' });
+        }
+
+        res.json({ message: 'Portfolio deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting portfolio', error);
+        res.status(500).json({ message: 'Failed to delete portfolio' });
+    }
+});
+
 // Start the server
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
