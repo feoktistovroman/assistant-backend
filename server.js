@@ -36,6 +36,13 @@ const portfolioSchema = new mongoose.Schema({
     industries: { type: String, required: true },
     risks: { type: String, required: true },
     preferences: { type: String, required: false },
+    calculator: {
+        moneyToInvest: { type: Number, required: false },
+        monthlyInvestment: { type: Number, required: false },
+        riskLevel: { type: String, required: false },
+        investmentYears: { type: Number, required: false },
+    },
+    stocks: { type: Object, required: false },
 });
 
 const User = mongoose.model('User', userSchema);
@@ -205,6 +212,32 @@ app.delete('/portfolio/:portfolioId', authenticateUser, async (req, res) => {
     } catch (error) {
         console.error('Error deleting portfolio', error);
         res.status(500).json({ message: 'Failed to delete portfolio' });
+    }
+});
+
+// Update portfolio endpoint
+app.patch('/portfolio/:portfolioId', authenticateUser, async (req, res) => {
+    try {
+        const { portfolioId } = req.params;
+
+        // Find portfolio by ID and user
+        const portfolio = await Portfolio.findOneAndUpdate(
+            {
+                _id: portfolioId,
+                user: req.userId,
+            },
+            { $set: req.body }, // Use $set operator to update only the provided fields
+            { new: true }
+        );
+
+        if (!portfolio) {
+            return res.status(404).json({ message: 'Portfolio not found' });
+        }
+
+        res.json({ message: 'Portfolio updated successfully', portfolio });
+    } catch (error) {
+        console.error('Error updating portfolio', error);
+        res.status(500).json({ message: 'Failed to update portfolio' });
     }
 });
 
