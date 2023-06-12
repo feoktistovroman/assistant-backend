@@ -70,7 +70,7 @@ app.post('/login', async (req, res) => {
         }
 
         // Generate JWT
-        const token = jwt.sign({ email }, process.env.JWT_SECRET_KEY);
+        const token = jwt.sign({ email }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
 
         res.json({ token });
     } catch (error) {
