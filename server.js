@@ -42,7 +42,12 @@ const portfolioSchema = new mongoose.Schema({
         riskLevel: { type: String, required: false },
         investmentYears: { type: Number, required: false },
     },
-    stocks: { type: Object, required: false },
+    stocks: [{
+        ticker: { type: String, required: true },
+        number: { type: Number, required: false },
+        basePrice: { type: Number, required: false },
+        percentage: { type: Number, required: false },
+    }],
 });
 
 const User = mongoose.model('User', userSchema);
