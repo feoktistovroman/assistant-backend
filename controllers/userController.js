@@ -6,7 +6,7 @@ exports.getDashboard = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json({ message: `Welcome, ${user.email}!` });
+        res.json({ message: `Welcome, ${user.name}!` });
     } catch (error) {
         console.error(error);
         res.status(401).json({ message: 'Unauthorized' });
