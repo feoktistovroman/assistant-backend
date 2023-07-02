@@ -2,7 +2,7 @@ const Portfolio = require('../models/portfolio');
 
 exports.createPortfolio = async (req, res) => {
     try {
-        const { title, goals, industries, risks, preferences } = req.body;
+        const { title, goals, industries, preferences } = req.body;
 
         // Create new portfolio
         const portfolio = new Portfolio({
@@ -10,7 +10,6 @@ exports.createPortfolio = async (req, res) => {
             title,
             goals,
             industries,
-            risks,
             preferences,
         });
 
