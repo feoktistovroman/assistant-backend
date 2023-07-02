@@ -9,7 +9,6 @@ const portfolioSchema = new mongoose.Schema({
     title: { type: String, required: true },
     goals: { type: String, required: true },
     industries: { type: String, required: true },
-    risks: { type: String, required: true },
     preferences: { type: String, required: false },
     calculator: {
         moneyToInvest: { type: Number, required: false },
