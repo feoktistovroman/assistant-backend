@@ -17,7 +17,7 @@ exports.createPortfolio = async (req, res) => {
         // Save portfolio
         await portfolio.save();
 
-        res.status(201).json({ message: 'Portfolio saved successfully' });
+        res.status(201).json({ message: 'Portfolio saved successfully', portfolioId: portfolio._id });
     } catch (error) {
         console.error('Error saving portfolio', error);
         res.status(500).json({ message: 'Failed to save portfolio' });
